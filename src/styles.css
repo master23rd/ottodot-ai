@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 :root {
+  --brand-orange: #df6128;
+  --brand-orange-hover: #bc4c1c;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   color: #172025;
   background: #f4f5ef;
@@ -24,8 +26,8 @@ button, input { font: inherit; }
 .eyebrow { font-family: 'JetBrains Mono', ui-monospace, monospace; color: #b95222; font-size: .72rem; font-weight: 700; letter-spacing: .11em; line-height: 1.5; }
 .text-link { color: #a54b24; font-weight: 700; font-size: .9rem; }
 .text-link:hover { color: #7a3216; }
-.primary-link { display: inline-flex; align-items: center; justify-content: center; gap: 16px; border-radius: 999px; padding: 14px 21px; background: #df6128; color: white; font-size: .9rem; font-weight: 700; box-shadow: 0 8px 20px #df61282e; transition: background .18s, transform .18s; }
-.primary-link:hover { background: #bc4c1c; transform: translateY(-2px); }
+.primary-link { display: inline-flex; align-items: center; justify-content: center; gap: 16px; border-radius: 999px; padding: 14px 21px; background: var(--brand-orange); color: white; font-size: .9rem; font-weight: 700; box-shadow: 0 8px 20px #df61282e; transition: background .18s, transform .18s; }
+.primary-link:hover { background: var(--brand-orange-hover); transform: translateY(-2px); }
 
 .landing-shell { min-height: 100vh; max-width: 1500px; margin: auto; padding: 24px clamp(20px, 5vw, 80px); }
 .landing-header { display: flex; align-items: center; justify-content: space-between; }
@@ -39,7 +41,7 @@ button, input { font: inherit; }
 .orbit { position: absolute; border: 2px solid #4d7063; border-radius: 50%; z-index: 1; transform: rotate(-27deg); }
 .orbit-one { inset: 15% 8%; }
 .orbit-two { inset: 30% -15%; }
-.orbit-center { position: absolute; z-index: 2; top: 50%; left: 50%; transform: translate(-50%, -50%); display: grid; place-items: center; width: 32%; aspect-ratio: 1; border-radius: 50%; background: #df6128; color: #fff8ee; font-size: clamp(4rem, 9vw, 8rem); font-weight: 800; letter-spacing: -.1em; box-shadow: 0 15px 30px #7d351f40; }
+.orbit-center { position: absolute; z-index: 2; top: 50%; left: 50%; transform: translate(-50%, -50%); display: grid; place-items: center; width: 32%; aspect-ratio: 1; border-radius: 50%; background: var(--brand-orange); color: #fff8ee; font-size: clamp(4rem, 9vw, 8rem); font-weight: 800; letter-spacing: -.1em; box-shadow: 0 15px 30px #7d351f40; }
 .orbit-center span { font-size: .45em; }
 
 .auth-wrap { min-height: 100vh; display: flex; align-items: center; padding: clamp(12px, 2vw, 32px); background: radial-gradient(circle at 90% 10%, #f2d6ba, transparent 29%), #f0f2eb; }
@@ -65,9 +67,9 @@ button, input { font: inherit; }
 .login-form { display: grid; gap: 20px; margin-top: 34px; }
 .login-form .mantine-InputWrapper-label { color: #35433c; font-size: .84rem; margin-bottom: 8px; font-weight: 600; }
 .login-form .mantine-Input-input { height: 48px; border-radius: 11px; border-color: #d8ded5; background: #fff; }
-.login-form .mantine-Input-input:focus { border-color: #df6128; }
-.login-form .mantine-Button-root { height: 48px; margin-top: 4px; border-radius: 999px; background: #df6128; font-weight: 700; }
-.login-form .mantine-Button-root:hover { background: #bb4b1c; }
+.login-form .mantine-Input-input:focus { border-color: var(--brand-orange); }
+.login-form .mantine-Button-root { height: 48px; margin-top: 4px; border-radius: 999px; background: var(--brand-orange); font-weight: 700; }
+.login-form .mantine-Button-root:hover { background: var(--brand-orange-hover); }
 .auth-help { border-top: 1px solid #e7ebe4; margin-top: 33px; padding-top: 23px; font-size: .82rem; line-height: 1.7; color: #7d8881; }
 .auth-footer { text-align: right; }
 

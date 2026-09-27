@@ -1,32 +1,32 @@
 import { useState } from 'react'
-import { Button } from '@mantine/core'
-import { createFileRoute, redirect, useNavigate, useRouter } from '@tanstack/react-router'
+import { Alert, Button } from '@mantine/core'
+import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
 import { Brand } from '@/components/Brand'
 import { authClient } from '@/lib/auth-client'
-import { getSuperadminDashboard } from '@/lib/dashboard.functions'
+import { requireSuperadminDashboard } from '@/lib/dashboard-guard'
 
 export const Route = createFileRoute('/dashboard')({
-  beforeLoad: async () => {
-    const result = await getSuperadminDashboard()
-    if (result.status === 'unauthenticated') throw redirect({ to: '/login' })
-    if (result.status === 'forbidden') throw redirect({ to: '/unauthorized' })
-    return { user: result.user }
-  },
+  beforeLoad: () => requireSuperadminDashboard(),
   component: Dashboard,
 })
 
 function Dashboard() {
   const { user } = Route.useRouteContext()
   const [pending, setPending] = useState(false)
+  const [logoutError, setLogoutError] = useState('')
   const navigate = useNavigate()
   const router = useRouter()
 
   async function logout() {
+    setLogoutError('')
     setPending(true)
     try {
-      await authClient.signOut()
+      const result = await authClient.signOut()
+      if (result.error) throw new Error('Sign out failed')
       await router.invalidate()
       await navigate({ to: '/login' })
+    } catch {
+      setLogoutError('Tidak dapat keluar sekarang. Coba lagi beberapa saat.')
     } finally {
       setPending(false)
     }
@@ -44,6 +44,7 @@ function Dashboard() {
       <main className="dashboard-main">
         <header className="dashboard-topbar"><span className="eyebrow">RUANG KERJA / RINGKASAN</span><Button variant="subtle" color="dark" loading={pending} onClick={logout}>Keluar</Button></header>
         <div className="dashboard-content">
+          {logoutError && <Alert color="red" role="alert">{logoutError}</Alert>}
           <div className="dashboard-heading"><p className="eyebrow">SUPERADMIN</p><h1>Selamat datang, {user.name}.</h1><p>Fondasi OttoDot sudah siap. Akun admin, kelas, dan pendaftaran akan hadir pada tahap berikutnya.</p></div>
           <section className="dashboard-grid" aria-label="Status ruang kerja">
             <article className="dashboard-panel"><span className="panel-icon">●</span><p>Status akun</p><strong>Aktif</strong><small>Akses tingkat platform</small></article>

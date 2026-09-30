@@ -3,6 +3,7 @@ import { hashPassword } from 'better-auth/crypto'
 import { Prisma } from '@/generated/prisma/client'
 import { prisma } from './prisma.server'
 import { AdminActionError, assertSuperadminAccess } from './admin-access'
+import { adminAuditActions, type AdminAuditAction } from './admin-audit'
 
 const activationLifetimeMs = 48 * 60 * 60 * 1000
 
@@ -26,6 +27,10 @@ function activationUrl(token: string) {
 
 async function lockUser(tx: Prisma.TransactionClient, userId: string) {
   await tx.$queryRaw`SELECT "id" FROM "user" WHERE "id" = ${userId} FOR UPDATE`
+}
+
+function auditAction(action: AdminAuditAction) {
+  return action satisfies keyof typeof adminAuditActions
 }
 
 export async function listAdmins(actorId: string) {
@@ -70,7 +75,7 @@ export async function createAdminAccount(actorId: string, input: { name: string;
         data: { id: randomUUID(), userId, tokenHash: activation.tokenHash, expiresAt: activation.expiresAt },
       })
       await tx.adminAudit.create({
-        data: { id: randomUUID(), actorId, targetId: userId, action: 'CREATE' },
+        data: { id: randomUUID(), actorId, targetId: userId, action: auditAction('CREATE') },
       })
     })
   } catch (error) {
@@ -96,7 +101,7 @@ export async function reissueAdminActivation(actorId: string, targetId: string) 
       update: { tokenHash: activation.tokenHash, expiresAt: activation.expiresAt },
       create: { id: randomUUID(), userId: targetId, tokenHash: activation.tokenHash, expiresAt: activation.expiresAt },
     })
-    await tx.adminAudit.create({ data: { id: randomUUID(), actorId, targetId, action: 'REISSUE_ACTIVATION' } })
+    await tx.adminAudit.create({ data: { id: randomUUID(), actorId, targetId, action: auditAction('REISSUE_ACTIVATION') } })
   })
   return { activationUrl: link, expiresAt: activation.expiresAt }
 }
@@ -115,7 +120,7 @@ export async function setAdminActive(actorId: string, targetId: string, active: 
       await tx.adminActivation.deleteMany({ where: { userId: targetId } })
     }
     await tx.adminAudit.create({
-      data: { id: randomUUID(), actorId, targetId, action: active ? 'ACTIVATE' : 'DEACTIVATE' },
+      data: { id: randomUUID(), actorId, targetId, action: auditAction(active ? 'ACTIVATE' : 'DEACTIVATE') },
     })
     return { changed: true }
   })
@@ -141,7 +146,7 @@ export async function activateAdminAccount(token: string, password: string) {
       data: { id: randomUUID(), accountId: activation.userId, providerId: 'credential', userId: activation.userId, password: passwordHash },
     })
     await tx.user.update({ where: { id: activation.userId }, data: { isActive: true, activatedAt: new Date() } })
-    await tx.adminAudit.create({ data: { id: randomUUID(), actorId: activation.userId, targetId: activation.userId, action: 'COMPLETE_ACTIVATION' } })
+    await tx.adminAudit.create({ data: { id: randomUUID(), actorId: activation.userId, targetId: activation.userId, action: auditAction('COMPLETE_ACTIVATION') } })
     return { activated: true }
   })
 }

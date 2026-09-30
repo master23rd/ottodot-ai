@@ -35,6 +35,14 @@ function actionError(error: unknown): { ok: false; code: string } {
   throw error
 }
 
+async function superadminAction<T extends object>(action: (actorId: string) => Promise<T>) {
+  try {
+    requireSameOrigin()
+    const actorId = await requireActiveSuperadmin(await sessionUserId())
+    return { ok: true as const, ...await action(actorId) }
+  } catch (error) { return actionError(error) }
+}
+
 export const getAdminManagement = createServerFn({ method: 'GET' }).handler(async () => {
   const userId = await sessionUserId()
   if (!userId) return { status: 'unauthenticated' as const }
@@ -49,33 +57,15 @@ export const getAdminManagement = createServerFn({ method: 'GET' }).handler(asyn
 
 export const createAdmin = createServerFn({ method: 'POST' })
   .validator(adminInput)
-  .handler(async ({ data }) => {
-    try {
-      requireSameOrigin()
-      const actorId = await requireActiveSuperadmin(await sessionUserId())
-      return { ok: true as const, ...await createAdminAccount(actorId, data) }
-    } catch (error) { return actionError(error) }
-  })
+  .handler(async ({ data }) => superadminAction((actorId) => createAdminAccount(actorId, data)))
 
 export const reissueActivation = createServerFn({ method: 'POST' })
   .validator(targetInput)
-  .handler(async ({ data }) => {
-    try {
-      requireSameOrigin()
-      const actorId = await requireActiveSuperadmin(await sessionUserId())
-      return { ok: true as const, ...await reissueAdminActivation(actorId, data.userId) }
-    } catch (error) { return actionError(error) }
-  })
+  .handler(async ({ data }) => superadminAction((actorId) => reissueAdminActivation(actorId, data.userId)))
 
 export const changeAdminStatus = createServerFn({ method: 'POST' })
   .validator(statusInput)
-  .handler(async ({ data }) => {
-    try {
-      requireSameOrigin()
-      const actorId = await requireActiveSuperadmin(await sessionUserId())
-      return { ok: true as const, ...await setAdminActive(actorId, data.userId, data.active) }
-    } catch (error) { return actionError(error) }
-  })
+  .handler(async ({ data }) => superadminAction((actorId) => setAdminActive(actorId, data.userId, data.active)))
 
 export const completeAdminActivation = createServerFn({ method: 'POST' })
   .validator(activateInput)
@@ -90,7 +80,7 @@ export const getMyWorkspace = createServerFn({ method: 'GET' }).handler(async ()
   const userId = await sessionUserId()
   if (!userId) return { status: 'unauthenticated' as const }
   const user = await prisma.user.findUnique({
-    where: { id: userId }, select: { id: true, name: true, role: true, isActive: true },
+    where: { id: userId }, select: { id: true, name: true, role: true, isActive: true, createdAt: true, activatedAt: true },
   })
   if (!user?.isActive) return { status: 'forbidden' as const }
   if (user.role === 'SUPERADMIN' || user.role === 'ADMIN') return { status: 'ok' as const, user }

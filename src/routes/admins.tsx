@@ -3,6 +3,7 @@ import { Alert, Button, TextInput } from '@mantine/core'
 import { createFileRoute, Link, redirect, useRouter } from '@tanstack/react-router'
 import { Brand } from '@/components/Brand'
 import { changeAdminStatus, createAdmin, getAdminManagement, reissueActivation } from '@/lib/admin.functions'
+import { adminAuditActions } from '@/lib/admin-audit'
 
 export const Route = createFileRoute('/admins')({
   beforeLoad: async () => {
@@ -131,7 +132,7 @@ function AdminManagement() {
               )}
             </section>
           </div>
-          <section className="admin-card admin-audit"><div className="admin-section-head"><div><p className="eyebrow">JEJAK PERUBAHAN</p><h2>Aktivitas terbaru</h2></div></div>{audits.length === 0 ? <p>Belum ada perubahan akun.</p> : <ol>{audits.map((audit) => <li key={audit.id}><span>{({ CREATE: 'Akun dibuat', REISSUE_ACTIVATION: 'Tautan aktivasi diperbarui', COMPLETE_ACTIVATION: 'Admin menyelesaikan aktivasi', ACTIVATE: 'Akun diaktifkan', DEACTIVATE: 'Akun dinonaktifkan' } as Record<string, string>)[audit.action] ?? audit.action}</span><small>{audit.result === 'SUCCESS' ? 'Berhasil' : audit.result} · {audit.actorName} → {audit.targetName} · {new Date(audit.createdAt).toLocaleString('id-ID')}</small></li>)}</ol>}</section>
+          <section className="admin-card admin-audit"><div className="admin-section-head"><div><p className="eyebrow">JEJAK PERUBAHAN</p><h2>Aktivitas terbaru</h2></div></div>{audits.length === 0 ? <p>Belum ada perubahan akun.</p> : <ol>{audits.map((audit) => <li key={audit.id}><span>{adminAuditActions[audit.action as keyof typeof adminAuditActions] ?? audit.action}</span><small>{audit.result === 'SUCCESS' ? 'Berhasil' : audit.result} · {audit.actorName} → {audit.targetName} · {new Date(audit.createdAt).toLocaleString('id-ID')}</small></li>)}</ol>}</section>
         </div>
       </main>
     </div>

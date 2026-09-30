@@ -3,6 +3,7 @@ import { Alert, Button, PasswordInput, TextInput } from '@mantine/core'
 import { createFileRoute, Link, useNavigate, useRouter } from '@tanstack/react-router'
 import { authClient } from '@/lib/auth-client'
 import { Brand } from '@/components/Brand'
+import { getMyWorkspace } from '@/lib/admin.functions'
 
 export const Route = createFileRoute('/login')({ component: Login })
 
@@ -22,11 +23,17 @@ function Login() {
     try {
       const result = await authClient.signIn.email({ email, password })
       if (result.error) {
-        setError('Email atau kata sandi tidak cocok.')
+        setError(result.error.code === 'ACCOUNT_INACTIVE' ? 'Akun nonaktif. Hubungi superadmin untuk memulihkan akses.' : 'Email atau kata sandi tidak cocok.')
         return
       }
       await router.invalidate()
-      await navigate({ to: '/dashboard' })
+      const workspace = await getMyWorkspace()
+      if (workspace.status !== 'ok') {
+        await authClient.signOut()
+        setError('Akun tidak aktif atau belum memiliki akses.')
+        return
+      }
+      await navigate({ to: workspace.user.role === 'SUPERADMIN' ? '/dashboard' : '/admin' })
     } catch {
       setError('Tidak dapat masuk sekarang. Coba lagi beberapa saat.')
     } finally {

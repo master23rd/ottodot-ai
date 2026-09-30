@@ -52,6 +52,8 @@ export async function seedSuperadmin(config = readBootstrapConfig(), client?: Pr
             email: config.email,
             name: config.name,
             role: 'SUPERADMIN',
+          isActive: true,
+          activatedAt: new Date(),
             emailVerified: true,
           },
         })

@@ -8,6 +8,6 @@ export const getSuperadminDashboard = createServerFn({ method: 'GET' }).handler(
   const session = await auth.api.getSession({ headers: getRequestHeaders() })
   return resolveDashboardAccess(session?.user.id ?? null, (id) => prisma.user.findUnique({
     where: { id },
-    select: { id: true, name: true, email: true, role: true },
+    select: { id: true, name: true, email: true, role: true, isActive: true },
   }))
 })

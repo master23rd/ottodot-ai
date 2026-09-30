@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { tanstackStartCookies } from 'better-auth/tanstack-start'
+import { APIError } from 'better-auth/api'
 import { prisma } from './prisma.server'
 
 if (!process.env.BETTER_AUTH_SECRET || process.env.BETTER_AUTH_SECRET.length < 32) {
@@ -14,6 +15,18 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     disableSignUp: true,
+  },
+  databaseHooks: {
+    session: {
+      create: {
+        async before(session) {
+          const user = await prisma.user.findUnique({ where: { id: session.userId }, select: { isActive: true } })
+          if (!user?.isActive) {
+            throw APIError.from('FORBIDDEN', { code: 'ACCOUNT_INACTIVE', message: 'Akun tidak aktif.' })
+          }
+        },
+      },
+    },
   },
   user: {
     additionalFields: {

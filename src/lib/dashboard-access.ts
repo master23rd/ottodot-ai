@@ -1,4 +1,4 @@
-export type DashboardUser = { id: string; name: string; email: string; role: string }
+export type DashboardUser = { id: string; name: string; email: string; role: string; isActive: boolean }
 
 export async function resolveDashboardAccess(
   sessionUserId: string | null,
@@ -6,6 +6,6 @@ export async function resolveDashboardAccess(
 ) {
   if (!sessionUserId) return { status: 'unauthenticated' as const }
   const user = await findUser(sessionUserId)
-  if (!user || user.role !== 'SUPERADMIN') return { status: 'forbidden' as const }
+  if (!user || user.role !== 'SUPERADMIN' || !user.isActive) return { status: 'forbidden' as const }
   return { status: 'ok' as const, user }
 }

@@ -1,7 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { requireSuperadminDashboard } from './dashboard-guard'
 
-const user = { id: '1', name: 'Owner', email: 'owner@example.com', role: 'SUPERADMIN' }
+vi.mock('./dashboard.functions', () => ({ getSuperadminDashboard: vi.fn() }))
+
+const user = { id: '1', name: 'Owner', email: 'owner@example.com', role: 'SUPERADMIN', isActive: true }
 
 describe('dashboard route guard', () => {
   it('sends anonymous users to login', async () => {

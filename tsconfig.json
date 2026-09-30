@@ -15,5 +15,5 @@
     "types": ["vite/client", "node"],
     "paths": { "@/*": ["./src/*"] }
   },
-  "include": ["src", "prisma", "prisma.config.ts", "vite.config.ts"]
+  "include": ["src", "prisma", "prisma.config.ts", "vite.config.ts", "vitest.config.ts"]
 }

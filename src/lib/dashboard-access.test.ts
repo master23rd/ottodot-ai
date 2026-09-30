@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { resolveDashboardAccess } from './dashboard-access'
 
-const user = { id: 'user-1', name: 'Owner', email: 'owner@example.com', role: 'SUPERADMIN' }
+const user = { id: 'user-1', name: 'Owner', email: 'owner@example.com', role: 'SUPERADMIN', isActive: true }
 
 describe('superadmin dashboard access', () => {
   it('redirects anonymous users before querying the database', async () => {

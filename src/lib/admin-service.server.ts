@@ -4,6 +4,7 @@ import { Prisma } from '@/generated/prisma/client'
 import { prisma } from './prisma.server'
 import { AdminActionError, assertSuperadminAccess } from './admin-access'
 import { adminAuditActions, type AdminAuditAction } from './admin-audit'
+import { sendAdminActivationEmail } from './mail.server'
 
 const activationLifetimeMs = 48 * 60 * 60 * 1000
 
@@ -40,7 +41,7 @@ export async function listAdmins(actorId: string) {
       where: { role: 'ADMIN' },
       select: {
         id: true, name: true, email: true, isActive: true, activatedAt: true, createdAt: true,
-        adminActivation: { select: { expiresAt: true } },
+        adminActivation: { select: { expiresAt: true, deliveryStatus: true, deliveryAttemptedAt: true } },
       },
       orderBy: { createdAt: 'desc' },
     }),
@@ -54,10 +55,41 @@ export async function listAdmins(actorId: string) {
   return { admins, audits: audits.map((audit) => ({ ...audit, actorName: names.get(audit.actorId) ?? 'Akun tidak ditemukan', targetName: names.get(audit.targetId) ?? 'Akun tidak ditemukan' })) }
 }
 
+async function deliverAdminActivation(input: {
+  actorId: string; userId: string; email: string; name: string; token: string; tokenHash: string
+}) {
+  let emailSent = false
+  try {
+    await sendAdminActivationEmail({
+      to: input.email,
+      name: input.name,
+      activationUrl: activationUrl(input.token),
+    })
+    emailSent = true
+  } catch {
+    // The admin remains pending so the superadmin can send a new link.
+  }
+  await prisma.$transaction(async (tx) => {
+    const updated = await tx.adminActivation.updateMany({
+      where: { userId: input.userId, tokenHash: input.tokenHash },
+      data: { deliveryStatus: emailSent ? 'SENT' : 'FAILED', deliveryAttemptedAt: new Date() },
+    })
+    if (updated.count === 1) {
+      await tx.adminAudit.create({
+        data: {
+          id: randomUUID(), actorId: input.actorId, targetId: input.userId,
+          action: auditAction('SEND_ACTIVATION_EMAIL'), result: emailSent ? 'SUCCESS' : 'FAILED',
+        },
+      })
+    }
+  })
+  return { emailSent }
+}
+
 export async function createAdminAccount(actorId: string, input: { name: string; email: string }) {
   await requireActiveSuperadmin(actorId)
   const activation = newActivationToken()
-  const link = activationUrl(activation.token)
+  activationUrl(activation.token)
   const userId = randomUUID()
   try {
     await prisma.$transaction(async (tx) => {
@@ -84,26 +116,33 @@ export async function createAdminAccount(actorId: string, input: { name: string;
     }
     throw error
   }
-  return { userId, activationUrl: link, expiresAt: activation.expiresAt }
+  return { userId, expiresAt: activation.expiresAt, ...await deliverAdminActivation({
+    actorId, userId, email: input.email.trim().toLowerCase(), name: input.name.trim(),
+    token: activation.token, tokenHash: activation.tokenHash,
+  }) }
 }
 
 export async function reissueAdminActivation(actorId: string, targetId: string) {
   await requireActiveSuperadmin(actorId)
   const activation = newActivationToken()
-  const link = activationUrl(activation.token)
-  await prisma.$transaction(async (tx) => {
+  activationUrl(activation.token)
+  const target = await prisma.$transaction(async (tx) => {
     await lockUser(tx, targetId)
-    const target = await tx.user.findUnique({ where: { id: targetId }, select: { role: true, activatedAt: true } })
+    const target = await tx.user.findUnique({ where: { id: targetId }, select: { role: true, activatedAt: true, name: true, email: true } })
     if (target?.role !== 'ADMIN') throw new AdminActionError('NOT_FOUND')
     if (target.activatedAt) throw new AdminActionError('ALREADY_ACTIVATED')
     await tx.adminActivation.upsert({
       where: { userId: targetId },
-      update: { tokenHash: activation.tokenHash, expiresAt: activation.expiresAt },
+      update: { tokenHash: activation.tokenHash, expiresAt: activation.expiresAt, deliveryStatus: 'PENDING', deliveryAttemptedAt: null },
       create: { id: randomUUID(), userId: targetId, tokenHash: activation.tokenHash, expiresAt: activation.expiresAt },
     })
     await tx.adminAudit.create({ data: { id: randomUUID(), actorId, targetId, action: auditAction('REISSUE_ACTIVATION') } })
+    return target
   })
-  return { activationUrl: link, expiresAt: activation.expiresAt }
+  return { expiresAt: activation.expiresAt, ...await deliverAdminActivation({
+    actorId, userId: targetId, email: target.email, name: target.name,
+    token: activation.token, tokenHash: activation.tokenHash,
+  }) }
 }
 
 export async function setAdminActive(actorId: string, targetId: string, active: boolean) {

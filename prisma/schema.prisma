@@ -31,6 +31,8 @@ model AdminActivation {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   tokenHash String   @unique
   expiresAt DateTime
+  deliveryStatus String @default("PENDING")
+  deliveryAttemptedAt DateTime?
   createdAt DateTime @default(now())
 
   @@map("admin_activation")

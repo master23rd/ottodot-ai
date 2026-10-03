@@ -29,10 +29,12 @@ function messageFor(code: string) {
   return messages[code as ActionCode] ?? 'Tindakan gagal. Coba lagi.'
 }
 
-function adminStatus(admin: { isActive: boolean; activatedAt: Date | null; adminActivation: { expiresAt: Date } | null }) {
+function adminStatus(admin: { isActive: boolean; activatedAt: Date | null; adminActivation: { expiresAt: Date; deliveryStatus: string } | null }) {
   if (admin.activatedAt) return admin.isActive ? 'Aktif' : 'Nonaktif'
   if (!admin.adminActivation) return 'Nonaktif'
-  return new Date(admin.adminActivation.expiresAt) > new Date() ? 'Menunggu aktivasi' : 'Tautan kedaluwarsa'
+  if (admin.adminActivation.deliveryStatus === 'FAILED') return 'Email gagal dikirim'
+  if (new Date(admin.adminActivation.expiresAt) <= new Date()) return 'Tautan kedaluwarsa'
+  return admin.adminActivation.deliveryStatus === 'SENT' ? 'Menunggu aktivasi' : 'Menunggu pengiriman'
 }
 
 function AdminManagement() {
@@ -44,22 +46,20 @@ function AdminManagement() {
   const [busyId, setBusyId] = useState('')
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
-  const [activationLink, setActivationLink] = useState('')
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError('')
     setNotice('')
-    setActivationLink('')
     setPending(true)
     try {
       const result = await createAdmin({ data: { name, email } })
       if (!result.ok) { setError(messageFor(result.code)); return }
       setName('')
       setEmail('')
-      setActivationLink(result.activationUrl)
-      setNotice('Admin dibuat. Salin tautan aktivasi dan kirim secara pribadi kepada admin.')
-      await router.invalidate().catch(() => setError('Daftar belum diperbarui. Muat ulang halaman setelah menyalin tautan.'))
+      if (result.emailSent) setNotice('Admin dibuat. Email aktivasi telah dikirim ke alamat admin.')
+      else setError('Admin dibuat, tetapi email aktivasi gagal dikirim. Gunakan Kirim ulang email pada daftar admin.')
+      await router.invalidate().catch(() => setError('Daftar belum diperbarui. Muat ulang halaman.'))
     } catch {
       setError('Akun belum dibuat. Periksa nama dan email, lalu coba lagi.')
     } finally { setPending(false) }
@@ -69,7 +69,6 @@ function AdminManagement() {
     setBusyId(userId)
     setError('')
     setNotice('')
-    setActivationLink('')
     try {
       const result = await changeAdminStatus({ data: { userId, active } })
       if (!result.ok) { setError(messageFor(result.code)); return }
@@ -83,13 +82,12 @@ function AdminManagement() {
     setBusyId(userId)
     setError('')
     setNotice('')
-    setActivationLink('')
     try {
       const result = await reissueActivation({ data: { userId } })
       if (!result.ok) { setError(messageFor(result.code)); return }
-      setActivationLink(result.activationUrl)
-      setNotice('Tautan baru dibuat. Tautan sebelumnya tidak berlaku.')
-      await router.invalidate().catch(() => setError('Daftar belum diperbarui. Muat ulang halaman setelah menyalin tautan.'))
+      if (result.emailSent) setNotice('Email aktivasi baru dikirim. Tautan sebelumnya tidak berlaku.')
+      else setError('Email aktivasi gagal dikirim. Periksa konfigurasi SMTP lalu kirim ulang.')
+      await router.invalidate().catch(() => setError('Daftar belum diperbarui. Muat ulang halaman.'))
     } catch { setError('Tautan belum dibuat. Coba lagi.') }
     finally { setBusyId('') }
   }
@@ -107,13 +105,12 @@ function AdminManagement() {
       <main className="dashboard-main">
         <header className="dashboard-topbar"><span className="eyebrow">RUANG KERJA / AKUN ADMIN</span><Link to="/dashboard" className="text-link">Ringkasan</Link></header>
         <div className="dashboard-content admin-content">
-          <div className="dashboard-heading"><p className="eyebrow">AKSES OPERASIONAL</p><h1>Kelola akun admin.</h1><p>Buat akun, bagikan tautan aktivasi, dan atur akses ketika peran seseorang berubah.</p></div>
+          <div className="dashboard-heading"><p className="eyebrow">AKSES OPERASIONAL</p><h1>Kelola akun admin.</h1><p>Buat akun, kirim aktivasi melalui email, dan atur akses ketika peran seseorang berubah.</p></div>
           {error && <Alert color="red" role="alert" className="admin-feedback">{error}</Alert>}
           {notice && <Alert color="green" role="status" className="admin-feedback">{notice}</Alert>}
-          {activationLink && <section className="activation-share" aria-label="Tautan aktivasi"><strong>Tautan aktivasi sekali pakai</strong><p>Salin sekarang. Tautan ini hanya ditampilkan pada tindakan ini dan berlaku 48 jam.</p><div><input readOnly aria-label="Tautan aktivasi admin" value={activationLink} onFocus={(event) => event.currentTarget.select()} /><Button onClick={async () => { try { await navigator.clipboard.writeText(activationLink); setNotice('Tautan disalin. Kirim secara pribadi kepada admin.') } catch { setError('Salin tautan secara manual dari kolom di samping.') } }}>Salin tautan</Button></div></section>}
           <div className="admin-layout">
             <section className="admin-card admin-create">
-              <p className="eyebrow">AKUN BARU</p><h2>Tambahkan admin</h2><p>Admin akan menentukan kata sandinya melalui tautan aktivasi.</p>
+              <p className="eyebrow">AKUN BARU</p><h2>Tambahkan admin</h2><p>Admin akan menerima email untuk menentukan kata sandinya sendiri.</p>
               <form onSubmit={submit} className="admin-form">
                 <TextInput label="Nama lengkap" placeholder="Nama admin" value={name} onChange={(event) => setName(event.currentTarget.value)} required minLength={2} maxLength={100} disabled={pending} />
                 <TextInput label="Alamat email" placeholder="admin@contoh.com" type="email" value={email} onChange={(event) => setEmail(event.currentTarget.value)} required maxLength={254} disabled={pending} />
@@ -126,7 +123,7 @@ function AdminManagement() {
                 <div className="admin-rows">{admins.map((admin) => <article className="admin-row" key={admin.id}>
                   <div className="admin-identity"><span className="admin-initial">{admin.name.slice(0, 1).toUpperCase()}</span><div><strong>{admin.name}</strong><small>{admin.email}</small></div></div>
                   <div className="admin-row-actions"><span className={`admin-status ${adminStatus(admin) === 'Aktif' ? 'is-active' : ''}`}>{adminStatus(admin)}</span>
-                    {admin.activatedAt ? <Button size="xs" variant="light" color={admin.isActive ? 'red' : 'green'} loading={busyId === admin.id} onClick={() => changeStatus(admin.id, !admin.isActive)}>{admin.isActive ? 'Nonaktifkan' : 'Aktifkan'}</Button> : <><Button size="xs" variant="light" loading={busyId === admin.id} onClick={() => reissue(admin.id)}>Buat tautan baru</Button>{admin.adminActivation && <Button size="xs" variant="subtle" color="red" loading={busyId === admin.id} onClick={() => changeStatus(admin.id, false)}>Batalkan akses</Button>}</>}
+                    {admin.activatedAt ? <Button size="xs" variant="light" color={admin.isActive ? 'red' : 'green'} loading={busyId === admin.id} onClick={() => changeStatus(admin.id, !admin.isActive)}>{admin.isActive ? 'Nonaktifkan' : 'Aktifkan'}</Button> : <><Button size="xs" variant="light" loading={busyId === admin.id} onClick={() => reissue(admin.id)}>Kirim ulang email</Button>{admin.adminActivation && <Button size="xs" variant="subtle" color="red" loading={busyId === admin.id} onClick={() => changeStatus(admin.id, false)}>Batalkan akses</Button>}</>}
                   </div>
                 </article>)}</div>
               )}

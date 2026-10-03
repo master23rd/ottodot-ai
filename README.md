@@ -19,11 +19,11 @@ Fondasi aplikasi OttoDot untuk issue [#23](https://github.com/master23rd/ottodot
 ## Akun admin
 
 1. Masuk sebagai superadmin dan buka **Akun admin** dari dashboard.
-2. Buat akun dengan nama dan email unik. Salin tautan aktivasi yang muncul satu kali, lalu berikan secara pribadi kepada admin yang dituju. Aplikasi belum mengirim email otomatis.
+2. Buat akun dengan nama dan email unik. Aplikasi langsung mengirim tautan aktivasi sekali pakai ke alamat admin melalui SMTP. Status pengiriman terlihat pada daftar akun.
 3. Admin membuka tautan dalam 48 jam dan menetapkan kata sandi minimal 16 karakter. Setelah itu admin dapat masuk di `/login` dan diarahkan ke `/admin`.
-4. Superadmin dapat menonaktifkan akun dari daftar. Sesi lama langsung dicabut. Reaktivasi mengizinkan admin memakai kata sandi yang sudah dibuat. Untuk akun yang belum aktif atau tautan kedaluwarsa, buat tautan baru; tautan lama langsung tidak berlaku.
+4. Superadmin dapat menonaktifkan akun dari daftar. Sesi lama langsung dicabut. Reaktivasi mengizinkan admin memakai kata sandi yang sudah dibuat. Untuk email gagal atau tautan kedaluwarsa, gunakan **Kirim ulang email**; tautan lama langsung tidak berlaku.
 
-Perubahan akun tampil pada daftar aktivitas. Token aktivasi disimpan sebagai hash di database dan tidak dicatat dalam audit.
+Perubahan akun dan hasil pengiriman email tampil pada daftar aktivitas. Token aktivasi disimpan sebagai hash di database dan tidak dicatat dalam audit. Atur `MAIL_MAILER`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_ENCRYPTION`, `MAIL_FROM_ADDRESS`, dan `MAIL_FROM_NAME` di `.env`; jalankan `npm run mail:verify` untuk memeriksa koneksi SMTP tanpa mengirim pesan.
 
 Untuk build produksi, jalankan `npm run build` dan `npm start` dengan environment yang sama. Atur `BETTER_AUTH_URL` ke origin publik aplikasi. Jangan commit `.env`.
 

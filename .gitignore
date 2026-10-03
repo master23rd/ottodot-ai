@@ -11,3 +11,5 @@ coverage/
 *.tsbuildinfo
 pgdata/
 postgres-data/
+.claude/
+.windsurf/

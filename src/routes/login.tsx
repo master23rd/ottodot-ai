@@ -23,7 +23,7 @@ function Login() {
     try {
       const result = await authClient.signIn.email({ email, password })
       if (result.error) {
-        setError(result.error.code === 'ACCOUNT_INACTIVE' ? 'Akun nonaktif. Hubungi superadmin untuk memulihkan akses.' : 'Email atau kata sandi tidak cocok.')
+        setError(result.error.code === 'ACCOUNT_INACTIVE' ? 'Akun nonaktif. Hubungi pengelola untuk memulihkan akses.' : 'Email atau kata sandi tidak cocok.')
         return
       }
       await router.invalidate()
@@ -33,7 +33,7 @@ function Login() {
         setError('Akun tidak aktif atau belum memiliki akses.')
         return
       }
-      await navigate({ to: workspace.user.role === 'SUPERADMIN' ? '/dashboard' : '/admin' })
+      await navigate({ to: workspace.user.role === 'SUPERADMIN' ? '/dashboard' : workspace.user.role === 'TEACHER' ? '/teacher' : '/admin' })
     } catch {
       setError('Tidak dapat masuk sekarang. Coba lagi beberapa saat.')
     } finally {

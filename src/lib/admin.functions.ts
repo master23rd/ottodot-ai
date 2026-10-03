@@ -83,6 +83,6 @@ export const getMyWorkspace = createServerFn({ method: 'GET' }).handler(async ()
     where: { id: userId }, select: { id: true, name: true, role: true, isActive: true, createdAt: true, activatedAt: true },
   })
   if (!user?.isActive) return { status: 'forbidden' as const }
-  if (user.role === 'SUPERADMIN' || user.role === 'ADMIN') return { status: 'ok' as const, user }
+  if (user.role === 'SUPERADMIN' || user.role === 'ADMIN' || user.role === 'TEACHER') return { status: 'ok' as const, user }
   return { status: 'forbidden' as const }
 })

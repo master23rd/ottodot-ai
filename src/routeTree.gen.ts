@@ -11,10 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ActivateRouteImport } from './routes/activate'
+import { Route as ActivateTeacherRouteImport } from './routes/activate-teacher'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminsRouteImport } from './routes/admins'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as TeacherRouteImport } from './routes/teacher'
+import { Route as TeachersRouteImport } from './routes/teachers'
 import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
@@ -26,6 +29,11 @@ const IndexRoute = IndexRouteImport.update({
 const ActivateRoute = ActivateRouteImport.update({
   id: '/activate',
   path: '/activate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActivateTeacherRoute = ActivateTeacherRouteImport.update({
+  id: '/activate-teacher',
+  path: '/activate-teacher',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -48,6 +56,16 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TeacherRoute = TeacherRouteImport.update({
+  id: '/teacher',
+  path: '/teacher',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeachersRoute = TeachersRouteImport.update({
+  id: '/teachers',
+  path: '/teachers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UnauthorizedRoute = UnauthorizedRouteImport.update({
   id: '/unauthorized',
   path: '/unauthorized',
@@ -62,20 +80,26 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/activate': typeof ActivateRoute
+  '/activate-teacher': typeof ActivateTeacherRoute
   '/admin': typeof AdminRoute
   '/admins': typeof AdminsRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/teacher': typeof TeacherRoute
+  '/teachers': typeof TeachersRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activate': typeof ActivateRoute
+  '/activate-teacher': typeof ActivateTeacherRoute
   '/admin': typeof AdminRoute
   '/admins': typeof AdminsRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/teacher': typeof TeacherRoute
+  '/teachers': typeof TeachersRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -83,10 +107,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/activate': typeof ActivateRoute
+  '/activate-teacher': typeof ActivateTeacherRoute
   '/admin': typeof AdminRoute
   '/admins': typeof AdminsRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/teacher': typeof TeacherRoute
+  '/teachers': typeof TeachersRoute
   '/unauthorized': typeof UnauthorizedRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -95,30 +122,39 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/activate'
+    | '/activate-teacher'
     | '/admin'
     | '/admins'
     | '/dashboard'
     | '/login'
+    | '/teacher'
+    | '/teachers'
     | '/unauthorized'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/activate'
+    | '/activate-teacher'
     | '/admin'
     | '/admins'
     | '/dashboard'
     | '/login'
+    | '/teacher'
+    | '/teachers'
     | '/unauthorized'
     | '/api/auth/$'
   id:
     | '__root__'
     | '/'
     | '/activate'
+    | '/activate-teacher'
     | '/admin'
     | '/admins'
     | '/dashboard'
     | '/login'
+    | '/teacher'
+    | '/teachers'
     | '/unauthorized'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
@@ -126,10 +162,13 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActivateRoute: typeof ActivateRoute
+  ActivateTeacherRoute: typeof ActivateTeacherRoute
   AdminRoute: typeof AdminRoute
   AdminsRoute: typeof AdminsRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  TeacherRoute: typeof TeacherRoute
+  TeachersRoute: typeof TeachersRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
@@ -148,6 +187,13 @@ declare module '@tanstack/react-router' {
       path: '/activate'
       fullPath: '/activate'
       preLoaderRoute: typeof ActivateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/activate-teacher': {
+      id: '/activate-teacher'
+      path: '/activate-teacher'
+      fullPath: '/activate-teacher'
+      preLoaderRoute: typeof ActivateTeacherRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -178,6 +224,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/teacher': {
+      id: '/teacher'
+      path: '/teacher'
+      fullPath: '/teacher'
+      preLoaderRoute: typeof TeacherRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/teachers': {
+      id: '/teachers'
+      path: '/teachers'
+      fullPath: '/teachers'
+      preLoaderRoute: typeof TeachersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/unauthorized': {
       id: '/unauthorized'
       path: '/unauthorized'
@@ -198,10 +258,13 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivateRoute: ActivateRoute,
+  ActivateTeacherRoute: ActivateTeacherRoute,
   AdminRoute: AdminRoute,
   AdminsRoute: AdminsRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  TeacherRoute: TeacherRoute,
+  TeachersRoute: TeachersRoute,
   UnauthorizedRoute: UnauthorizedRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }

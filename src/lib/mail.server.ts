@@ -32,25 +32,44 @@ function smtpTransport() {
   })
 }
 
-export function adminActivationMessage(input: { to: string; name: string; activationUrl: string }, from: { name: string; address: string }) {
+type ActivationRecipient = { to: string; name: string; activationUrl: string }
+type MailFrom = { name: string; address: string }
+
+function activationMessage(input: ActivationRecipient, from: MailFrom, role: 'admin' | 'teacher') {
   return {
     from,
     to: input.to,
-    subject: 'Aktifkan akun admin OttoDot',
-    text: `Halo ${input.name},\n\nAkun admin OttoDot Anda telah dibuat. Buka tautan berikut untuk menetapkan kata sandi:\n\n${input.activationUrl}\n\nTautan berlaku 48 jam dan hanya dapat digunakan sekali. Jika Anda tidak mengenali undangan ini, abaikan email ini.\n\nOttoDot`,
+    subject: `Aktifkan akun ${role} OttoDot`,
+    text: `Halo ${input.name},\n\nAkun ${role} OttoDot Anda telah dibuat. Buka tautan berikut untuk menetapkan kata sandi:\n\n${input.activationUrl}\n\nTautan berlaku 48 jam dan hanya dapat digunakan sekali. Jika Anda tidak mengenali undangan ini, abaikan email ini.\n\nOttoDot`,
   }
 }
 
-export async function sendAdminActivationEmail(input: { to: string; name: string; activationUrl: string }) {
+export function adminActivationMessage(input: ActivationRecipient, from: MailFrom) {
+  return activationMessage(input, from, 'admin')
+}
+
+export function teacherActivationMessage(input: ActivationRecipient, from: MailFrom) {
+  return activationMessage(input, from, 'teacher')
+}
+
+async function sendActivationEmail(input: ActivationRecipient, role: 'admin' | 'teacher') {
   const transport = smtpTransport()
   try {
-    const info = await transport.sendMail(adminActivationMessage(input, smtpConfig().from))
+    const info = await transport.sendMail(activationMessage(input, smtpConfig().from, role))
     if (!info.accepted.some((address) => address.toLowerCase() === input.to.toLowerCase())) {
       throw new Error('SMTP_RECIPIENT_REJECTED')
     }
   } finally {
     transport.close()
   }
+}
+
+export function sendAdminActivationEmail(input: ActivationRecipient) {
+  return sendActivationEmail(input, 'admin')
+}
+
+export function sendTeacherActivationEmail(input: ActivationRecipient) {
+  return sendActivationEmail(input, 'teacher')
 }
 
 export async function verifySmtpConnection() {

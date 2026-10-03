@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { adminActivationMessage, smtpConfig } from './mail.server'
+import { adminActivationMessage, smtpConfig, teacherActivationMessage } from './mail.server'
 
 describe('admin activation email', () => {
   it('requires STARTTLS for the configured port and resolves the sender name', () => {
@@ -21,5 +21,15 @@ describe('admin activation email', () => {
     expect(message.text).toContain(url)
     expect(message.text).toContain('48 jam')
     expect(message.text).not.toContain('kata sandi sementara')
+  })
+
+  it('labels teacher invitations as teacher accounts', () => {
+    const message = teacherActivationMessage(
+      { to: 'teacher@example.com', name: 'Guru', activationUrl: 'http://localhost:3000/activate-teacher#token=test-token' },
+      { name: 'OttoDot', address: 'sender@example.com' },
+    )
+    expect(message.subject).toContain('teacher')
+    expect(message.to).toBe('teacher@example.com')
+    expect(message.text).toContain('/activate-teacher#token=test-token')
   })
 })

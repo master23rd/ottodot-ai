@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Alert, Button } from '@mantine/core'
-import { createFileRoute, redirect, useNavigate, useRouter } from '@tanstack/react-router'
+import { createFileRoute, Link, redirect, useNavigate, useRouter } from '@tanstack/react-router'
 import { Brand } from '@/components/Brand'
 import { authClient } from '@/lib/auth-client'
 import { getMyWorkspace } from '@/lib/admin.functions'
@@ -39,6 +39,7 @@ function AdminDashboard() {
       <Brand />
       <div className="sidebar-label">RUANG KERJA</div>
       <div className="nav-current">Ringkasan admin</div>
+      <Link className="nav-link" to="/teachers">Akun teacher</Link>
       <div className="sidebar-spacer" />
       <div className="sidebar-user"><span className="avatar">{user.name.slice(0, 1).toUpperCase()}</span><span><strong>{user.name}</strong><small>Admin</small></span></div>
     </aside>
@@ -52,7 +53,7 @@ function AdminDashboard() {
           <article className="dashboard-panel"><span className="panel-icon">○</span><p>Peran</p><strong>Admin</strong><small>Akses operator OttoDot</small></article>
           <article className="dashboard-panel"><span className="panel-icon">◌</span><p>Aktivasi</p><strong>{user.activatedAt ? new Date(user.activatedAt).toLocaleDateString('id-ID', { timeZone: 'UTC' }) : 'Belum tercatat'}</strong><small>Terdaftar sejak {new Date(user.createdAt).toLocaleDateString('id-ID', { timeZone: 'UTC' })}</small></article>
         </section>
-        <section className="next-step"><div><p className="eyebrow">PENGELOLAAN KELAS</p><h2>Tahap berikutnya</h2><p>Pembuatan akun teacher/staff dan pengelolaan kelas akan ditambahkan pada pekerjaan berikutnya. Akses admin lain tetap dikelola oleh superadmin.</p></div></section>
+        <section className="next-step"><div><p className="eyebrow">TIM PENGAJAR</p><h2>Bangun tim teacher.</h2><p>Buat akun teacher dan kirim aktivasi. Pengelolaan kelas serta penugasan akan tersedia pada tahap berikutnya.</p></div><Link className="text-link" to="/teachers">Kelola teacher →</Link></section>
       </div>
     </main>
   </div>

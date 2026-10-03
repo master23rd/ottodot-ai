@@ -1,33 +1,16 @@
-import { createHash, randomBytes, randomUUID } from 'node:crypto'
+import { randomUUID } from 'node:crypto'
 import { hashPassword } from 'better-auth/crypto'
 import { Prisma } from '@/generated/prisma/client'
 import { prisma } from './prisma.server'
 import { AdminActionError, assertSuperadminAccess } from './admin-access'
-import { adminAuditActions, type AdminAuditAction } from './admin-audit'
+import { adminAccountAuditActions, adminAuditActions, type AdminAuditAction } from './admin-audit'
 import { sendAdminActivationEmail } from './mail.server'
-
-const activationLifetimeMs = 48 * 60 * 60 * 1000
+import { hashActivationToken, lockOperatorUser, newActivationToken, operatorActivationUrl } from './operator-activation.server'
 
 export { AdminActionError } from './admin-access'
 
 export async function requireActiveSuperadmin(userId: string | null) {
   return assertSuperadminAccess(userId, async (id) => prisma.user.findUnique({ where: { id }, select: { role: true, isActive: true } }))
-}
-
-function newActivationToken() {
-  const token = randomBytes(32).toString('base64url')
-  const tokenHash = createHash('sha256').update(token).digest('hex')
-  return { token, tokenHash, expiresAt: new Date(Date.now() + activationLifetimeMs) }
-}
-
-function activationUrl(token: string) {
-  const origin = process.env.BETTER_AUTH_URL
-  if (!origin) throw new Error('BETTER_AUTH_URL is required for admin activation')
-  return `${new URL('/activate', origin).toString()}#token=${encodeURIComponent(token)}`
-}
-
-async function lockUser(tx: Prisma.TransactionClient, userId: string) {
-  await tx.$queryRaw`SELECT "id" FROM "user" WHERE "id" = ${userId} FOR UPDATE`
 }
 
 function auditAction(action: AdminAuditAction) {
@@ -45,7 +28,7 @@ export async function listAdmins(actorId: string) {
       },
       orderBy: { createdAt: 'desc' },
     }),
-    prisma.adminAudit.findMany({ orderBy: { createdAt: 'desc' }, take: 20 }),
+    prisma.adminAudit.findMany({ where: { action: { in: [...adminAccountAuditActions] } }, orderBy: { createdAt: 'desc' }, take: 20 }),
   ])
   const people = await prisma.user.findMany({
     where: { id: { in: [...new Set(audits.flatMap((audit) => [audit.actorId, audit.targetId]))] } },
@@ -63,7 +46,7 @@ async function deliverAdminActivation(input: {
     await sendAdminActivationEmail({
       to: input.email,
       name: input.name,
-      activationUrl: activationUrl(input.token),
+      activationUrl: operatorActivationUrl('admin', input.token),
     })
     emailSent = true
   } catch {
@@ -89,7 +72,7 @@ async function deliverAdminActivation(input: {
 export async function createAdminAccount(actorId: string, input: { name: string; email: string }) {
   await requireActiveSuperadmin(actorId)
   const activation = newActivationToken()
-  activationUrl(activation.token)
+  operatorActivationUrl('admin', activation.token)
   const userId = randomUUID()
   try {
     await prisma.$transaction(async (tx) => {
@@ -125,9 +108,9 @@ export async function createAdminAccount(actorId: string, input: { name: string;
 export async function reissueAdminActivation(actorId: string, targetId: string) {
   await requireActiveSuperadmin(actorId)
   const activation = newActivationToken()
-  activationUrl(activation.token)
+  operatorActivationUrl('admin', activation.token)
   const target = await prisma.$transaction(async (tx) => {
-    await lockUser(tx, targetId)
+    await lockOperatorUser(tx, targetId)
     const target = await tx.user.findUnique({ where: { id: targetId }, select: { role: true, activatedAt: true, name: true, email: true } })
     if (target?.role !== 'ADMIN') throw new AdminActionError('NOT_FOUND')
     if (target.activatedAt) throw new AdminActionError('ALREADY_ACTIVATED')
@@ -148,7 +131,7 @@ export async function reissueAdminActivation(actorId: string, targetId: string) 
 export async function setAdminActive(actorId: string, targetId: string, active: boolean) {
   await requireActiveSuperadmin(actorId)
   return prisma.$transaction(async (tx) => {
-    await lockUser(tx, targetId)
+    await lockOperatorUser(tx, targetId)
     const target = await tx.user.findUnique({ where: { id: targetId }, select: { role: true, isActive: true, activatedAt: true } })
     if (target?.role !== 'ADMIN') throw new AdminActionError('NOT_FOUND')
     if (active && !target.activatedAt) throw new AdminActionError('NOT_ACTIVATED')
@@ -166,12 +149,12 @@ export async function setAdminActive(actorId: string, targetId: string, active: 
 }
 
 export async function activateAdminAccount(token: string, password: string) {
-  const tokenHash = createHash('sha256').update(token).digest('hex')
+  const tokenHash = hashActivationToken(token)
   const existing = await prisma.adminActivation.findUnique({ where: { tokenHash }, select: { userId: true, expiresAt: true } })
   if (!existing || existing.expiresAt <= new Date()) throw new AdminActionError('INVALID_TOKEN')
   const passwordHash = await hashPassword(password)
   return prisma.$transaction(async (tx) => {
-    await lockUser(tx, existing.userId)
+    await lockOperatorUser(tx, existing.userId)
     const activation = await tx.adminActivation.findUnique({
       where: { tokenHash },
       include: { user: { select: { role: true, activatedAt: true } } },

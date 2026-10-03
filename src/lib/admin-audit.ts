@@ -14,3 +14,13 @@ export const adminAuditActions = {
 } as const
 
 export type AdminAuditAction = keyof typeof adminAuditActions
+
+export const adminAccountAuditActions = [
+  'CREATE', 'REISSUE_ACTIVATION', 'SEND_ACTIVATION_EMAIL',
+  'COMPLETE_ACTIVATION', 'ACTIVATE', 'DEACTIVATE',
+] as const satisfies ReadonlyArray<AdminAuditAction>
+
+export const teacherAccountAuditActions = [
+  'CREATE_TEACHER', 'SEND_TEACHER_ACTIVATION_EMAIL', 'REISSUE_TEACHER_ACTIVATION',
+  'COMPLETE_TEACHER_ACTIVATION', 'ACTIVATE_TEACHER', 'DEACTIVATE_TEACHER',
+] as const satisfies ReadonlyArray<AdminAuditAction>

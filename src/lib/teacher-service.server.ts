@@ -1,34 +1,13 @@
-import { createHash, randomBytes, randomUUID } from 'node:crypto'
+import { randomUUID } from 'node:crypto'
 import { hashPassword } from 'better-auth/crypto'
 import { Prisma } from '@/generated/prisma/client'
 import { prisma } from './prisma.server'
 import { assertAdminAccess, TeacherActionError } from './teacher-access'
-import { adminAuditActions } from './admin-audit'
+import { teacherAccountAuditActions } from './admin-audit'
 import { sendTeacherActivationEmail } from './mail.server'
-
-const activationLifetimeMs = 48 * 60 * 60 * 1000
-const teacherAuditActions = [
-  'CREATE_TEACHER', 'SEND_TEACHER_ACTIVATION_EMAIL', 'REISSUE_TEACHER_ACTIVATION',
-  'COMPLETE_TEACHER_ACTIVATION', 'ACTIVATE_TEACHER', 'DEACTIVATE_TEACHER',
-] as const satisfies ReadonlyArray<keyof typeof adminAuditActions>
-
+import { hashActivationToken, lockOperatorUser, newActivationToken, operatorActivationUrl } from './operator-activation.server'
 export async function requireActiveAdmin(userId: string | null) {
   return assertAdminAccess(userId, async (id) => prisma.user.findUnique({ where: { id }, select: { role: true, isActive: true } }))
-}
-
-function newActivationToken() {
-  const token = randomBytes(32).toString('base64url')
-  return { token, tokenHash: createHash('sha256').update(token).digest('hex'), expiresAt: new Date(Date.now() + activationLifetimeMs) }
-}
-
-function activationUrl(token: string) {
-  const origin = process.env.BETTER_AUTH_URL
-  if (!origin) throw new Error('BETTER_AUTH_URL is required for teacher activation')
-  return `${new URL('/activate-teacher', origin).toString()}#token=${encodeURIComponent(token)}`
-}
-
-async function lockUser(tx: Prisma.TransactionClient, userId: string) {
-  await tx.$queryRaw`SELECT "id" FROM "user" WHERE "id" = ${userId} FOR UPDATE`
 }
 
 export async function listTeachers(actorId: string) {
@@ -42,7 +21,7 @@ export async function listTeachers(actorId: string) {
       },
       orderBy: { createdAt: 'desc' },
     }),
-    prisma.adminAudit.findMany({ where: { action: { in: [...teacherAuditActions] } }, orderBy: { createdAt: 'desc' }, take: 20 }),
+    prisma.adminAudit.findMany({ where: { action: { in: [...teacherAccountAuditActions] } }, orderBy: { createdAt: 'desc' }, take: 20 }),
   ])
   const people = await prisma.user.findMany({
     where: { id: { in: [...new Set(audits.flatMap((audit) => [audit.actorId, audit.targetId]))] } },
@@ -59,7 +38,7 @@ async function deliverTeacherActivation(input: {
 }) {
   let emailSent = false
   try {
-    await sendTeacherActivationEmail({ to: input.email, name: input.name, activationUrl: activationUrl(input.token) })
+    await sendTeacherActivationEmail({ to: input.email, name: input.name, activationUrl: operatorActivationUrl('teacher', input.token) })
     emailSent = true
   } catch {
     // The pending account stays visible so the admin can retry delivery.
@@ -82,7 +61,7 @@ async function deliverTeacherActivation(input: {
 export async function createTeacherAccount(actorId: string, input: { name: string; email: string }) {
   await requireActiveAdmin(actorId)
   const activation = newActivationToken()
-  activationUrl(activation.token)
+  operatorActivationUrl('teacher', activation.token)
   const userId = randomUUID()
   const name = input.name.trim()
   const email = input.email.trim().toLowerCase()
@@ -106,9 +85,9 @@ export async function createTeacherAccount(actorId: string, input: { name: strin
 export async function reissueTeacherActivation(actorId: string, targetId: string) {
   await requireActiveAdmin(actorId)
   const activation = newActivationToken()
-  activationUrl(activation.token)
+  operatorActivationUrl('teacher', activation.token)
   const target = await prisma.$transaction(async (tx) => {
-    await lockUser(tx, targetId)
+    await lockOperatorUser(tx, targetId)
     const target = await tx.user.findUnique({ where: { id: targetId }, select: { role: true, activatedAt: true, name: true, email: true } })
     if (target?.role !== 'TEACHER') throw new TeacherActionError('NOT_FOUND')
     if (target.activatedAt) throw new TeacherActionError('ALREADY_ACTIVATED')
@@ -128,7 +107,7 @@ export async function reissueTeacherActivation(actorId: string, targetId: string
 export async function setTeacherActive(actorId: string, targetId: string, active: boolean) {
   await requireActiveAdmin(actorId)
   return prisma.$transaction(async (tx) => {
-    await lockUser(tx, targetId)
+    await lockOperatorUser(tx, targetId)
     const target = await tx.user.findUnique({ where: { id: targetId }, select: { role: true, isActive: true, activatedAt: true } })
     if (target?.role !== 'TEACHER') throw new TeacherActionError('NOT_FOUND')
     if (active && !target.activatedAt) throw new TeacherActionError('NOT_ACTIVATED')
@@ -146,12 +125,12 @@ export async function setTeacherActive(actorId: string, targetId: string, active
 }
 
 export async function activateTeacherAccount(token: string, password: string) {
-  const tokenHash = createHash('sha256').update(token).digest('hex')
+  const tokenHash = hashActivationToken(token)
   const existing = await prisma.teacherActivation.findUnique({ where: { tokenHash }, select: { userId: true, expiresAt: true } })
   if (!existing || existing.expiresAt <= new Date()) throw new TeacherActionError('INVALID_TOKEN')
   const passwordHash = await hashPassword(password)
   return prisma.$transaction(async (tx) => {
-    await lockUser(tx, existing.userId)
+    await lockOperatorUser(tx, existing.userId)
     const activation = await tx.teacherActivation.findUnique({
       where: { tokenHash }, include: { user: { select: { role: true, activatedAt: true } } },
     })

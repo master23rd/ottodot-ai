@@ -88,7 +88,7 @@ function TeacherManagement() {
   }
 
   return <div className="dashboard-shell">
-    <aside className="dashboard-sidebar"><Brand /><div className="sidebar-label">RUANG KERJA</div><Link className="nav-link" to="/admin">Ringkasan</Link><div className="nav-current">Akun teacher</div><div className="sidebar-spacer" /><div className="sidebar-user"><span className="avatar">A</span><span><strong>Admin</strong><small>Pengelola pengajar</small></span></div></aside>
+    <aside className="dashboard-sidebar"><Brand /><div className="sidebar-label">RUANG KERJA</div><Link className="nav-link" to="/admin">Ringkasan</Link><div className="nav-current">Akun teacher</div><Link className="nav-link" to="/staff-accounts">Akun staff</Link><div className="sidebar-spacer" /><div className="sidebar-user"><span className="avatar">A</span><span><strong>Admin</strong><small>Pengelola pengajar</small></span></div></aside>
     <main className="dashboard-main"><header className="dashboard-topbar"><span className="eyebrow">RUANG KERJA / AKUN TEACHER</span><Link to="/admin" className="text-link">Ringkasan</Link></header>
       <div className="dashboard-content admin-content">
         <div className="dashboard-heading"><p className="eyebrow">TIM PENGAJAR</p><h1>Kelola akun teacher.</h1><p>Buat akun, kirim aktivasi melalui email, dan atur akses pengajar.</p></div>

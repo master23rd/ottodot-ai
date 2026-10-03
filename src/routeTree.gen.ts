@@ -11,11 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ActivateRouteImport } from './routes/activate'
+import { Route as ActivateStaffRouteImport } from './routes/activate-staff'
 import { Route as ActivateTeacherRouteImport } from './routes/activate-teacher'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminsRouteImport } from './routes/admins'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as StaffRouteImport } from './routes/staff'
+import { Route as StaffAccountsRouteImport } from './routes/staff-accounts'
 import { Route as TeacherRouteImport } from './routes/teacher'
 import { Route as TeachersRouteImport } from './routes/teachers'
 import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
@@ -29,6 +32,11 @@ const IndexRoute = IndexRouteImport.update({
 const ActivateRoute = ActivateRouteImport.update({
   id: '/activate',
   path: '/activate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActivateStaffRoute = ActivateStaffRouteImport.update({
+  id: '/activate-staff',
+  path: '/activate-staff',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ActivateTeacherRoute = ActivateTeacherRouteImport.update({
@@ -56,6 +64,16 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StaffRoute = StaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StaffAccountsRoute = StaffAccountsRouteImport.update({
+  id: '/staff-accounts',
+  path: '/staff-accounts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TeacherRoute = TeacherRouteImport.update({
   id: '/teacher',
   path: '/teacher',
@@ -80,11 +98,14 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/activate': typeof ActivateRoute
+  '/activate-staff': typeof ActivateStaffRoute
   '/activate-teacher': typeof ActivateTeacherRoute
   '/admin': typeof AdminRoute
   '/admins': typeof AdminsRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/staff': typeof StaffRoute
+  '/staff-accounts': typeof StaffAccountsRoute
   '/teacher': typeof TeacherRoute
   '/teachers': typeof TeachersRoute
   '/unauthorized': typeof UnauthorizedRoute
@@ -93,11 +114,14 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activate': typeof ActivateRoute
+  '/activate-staff': typeof ActivateStaffRoute
   '/activate-teacher': typeof ActivateTeacherRoute
   '/admin': typeof AdminRoute
   '/admins': typeof AdminsRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/staff': typeof StaffRoute
+  '/staff-accounts': typeof StaffAccountsRoute
   '/teacher': typeof TeacherRoute
   '/teachers': typeof TeachersRoute
   '/unauthorized': typeof UnauthorizedRoute
@@ -107,11 +131,14 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/activate': typeof ActivateRoute
+  '/activate-staff': typeof ActivateStaffRoute
   '/activate-teacher': typeof ActivateTeacherRoute
   '/admin': typeof AdminRoute
   '/admins': typeof AdminsRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/staff': typeof StaffRoute
+  '/staff-accounts': typeof StaffAccountsRoute
   '/teacher': typeof TeacherRoute
   '/teachers': typeof TeachersRoute
   '/unauthorized': typeof UnauthorizedRoute
@@ -122,11 +149,14 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/activate'
+    | '/activate-staff'
     | '/activate-teacher'
     | '/admin'
     | '/admins'
     | '/dashboard'
     | '/login'
+    | '/staff'
+    | '/staff-accounts'
     | '/teacher'
     | '/teachers'
     | '/unauthorized'
@@ -135,11 +165,14 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/activate'
+    | '/activate-staff'
     | '/activate-teacher'
     | '/admin'
     | '/admins'
     | '/dashboard'
     | '/login'
+    | '/staff'
+    | '/staff-accounts'
     | '/teacher'
     | '/teachers'
     | '/unauthorized'
@@ -148,11 +181,14 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/activate'
+    | '/activate-staff'
     | '/activate-teacher'
     | '/admin'
     | '/admins'
     | '/dashboard'
     | '/login'
+    | '/staff'
+    | '/staff-accounts'
     | '/teacher'
     | '/teachers'
     | '/unauthorized'
@@ -162,11 +198,14 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActivateRoute: typeof ActivateRoute
+  ActivateStaffRoute: typeof ActivateStaffRoute
   ActivateTeacherRoute: typeof ActivateTeacherRoute
   AdminRoute: typeof AdminRoute
   AdminsRoute: typeof AdminsRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  StaffRoute: typeof StaffRoute
+  StaffAccountsRoute: typeof StaffAccountsRoute
   TeacherRoute: typeof TeacherRoute
   TeachersRoute: typeof TeachersRoute
   UnauthorizedRoute: typeof UnauthorizedRoute
@@ -187,6 +226,13 @@ declare module '@tanstack/react-router' {
       path: '/activate'
       fullPath: '/activate'
       preLoaderRoute: typeof ActivateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/activate-staff': {
+      id: '/activate-staff'
+      path: '/activate-staff'
+      fullPath: '/activate-staff'
+      preLoaderRoute: typeof ActivateStaffRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/activate-teacher': {
@@ -224,6 +270,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/staff': {
+      id: '/staff'
+      path: '/staff'
+      fullPath: '/staff'
+      preLoaderRoute: typeof StaffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/staff-accounts': {
+      id: '/staff-accounts'
+      path: '/staff-accounts'
+      fullPath: '/staff-accounts'
+      preLoaderRoute: typeof StaffAccountsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/teacher': {
       id: '/teacher'
       path: '/teacher'
@@ -258,11 +318,14 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivateRoute: ActivateRoute,
+  ActivateStaffRoute: ActivateStaffRoute,
   ActivateTeacherRoute: ActivateTeacherRoute,
   AdminRoute: AdminRoute,
   AdminsRoute: AdminsRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  StaffRoute: StaffRoute,
+  StaffAccountsRoute: StaffAccountsRoute,
   TeacherRoute: TeacherRoute,
   TeachersRoute: TeachersRoute,
   UnauthorizedRoute: UnauthorizedRoute,

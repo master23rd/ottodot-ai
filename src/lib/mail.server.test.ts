@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { adminActivationMessage, smtpConfig, teacherActivationMessage } from './mail.server'
+import { adminActivationMessage, smtpConfig, staffActivationMessage, teacherActivationMessage } from './mail.server'
 
 describe('admin activation email', () => {
   it('requires STARTTLS for the configured port and resolves the sender name', () => {
@@ -31,5 +31,15 @@ describe('admin activation email', () => {
     expect(message.subject).toContain('teacher')
     expect(message.to).toBe('teacher@example.com')
     expect(message.text).toContain('/activate-teacher#token=test-token')
+  })
+
+  it('labels staff invitations as staff accounts', () => {
+    const message = staffActivationMessage(
+      { to: 'staff@example.com', name: 'Staff', activationUrl: 'http://localhost:3000/activate-staff#token=test-token' },
+      { name: 'OttoDot', address: 'sender@example.com' },
+    )
+    expect(message.subject).toContain('staff')
+    expect(message.to).toBe('staff@example.com')
+    expect(message.text).toContain('/activate-staff#token=test-token')
   })
 })

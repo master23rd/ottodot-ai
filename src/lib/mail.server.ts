@@ -35,7 +35,7 @@ function smtpTransport() {
 type ActivationRecipient = { to: string; name: string; activationUrl: string }
 type MailFrom = { name: string; address: string }
 
-function activationMessage(input: ActivationRecipient, from: MailFrom, role: 'admin' | 'teacher') {
+function activationMessage(input: ActivationRecipient, from: MailFrom, role: 'admin' | 'teacher' | 'staff') {
   return {
     from,
     to: input.to,
@@ -52,7 +52,11 @@ export function teacherActivationMessage(input: ActivationRecipient, from: MailF
   return activationMessage(input, from, 'teacher')
 }
 
-async function sendActivationEmail(input: ActivationRecipient, role: 'admin' | 'teacher') {
+export function staffActivationMessage(input: ActivationRecipient, from: MailFrom) {
+  return activationMessage(input, from, 'staff')
+}
+
+async function sendActivationEmail(input: ActivationRecipient, role: 'admin' | 'teacher' | 'staff') {
   const transport = smtpTransport()
   try {
     const info = await transport.sendMail(activationMessage(input, smtpConfig().from, role))
@@ -70,6 +74,10 @@ export function sendAdminActivationEmail(input: ActivationRecipient) {
 
 export function sendTeacherActivationEmail(input: ActivationRecipient) {
   return sendActivationEmail(input, 'teacher')
+}
+
+export function sendStaffActivationEmail(input: ActivationRecipient) {
+  return sendActivationEmail(input, 'staff')
 }
 
 export async function verifySmtpConnection() {

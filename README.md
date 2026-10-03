@@ -1,6 +1,6 @@
 # OttoDot
 
-Fondasi aplikasi OttoDot untuk issue [#23](https://github.com/master23rd/ottodot-ai/issues/23), [#24](https://github.com/master23rd/ottodot-ai/issues/24), dan [#25](https://github.com/master23rd/ottodot-ai/issues/25). Superadmin mengelola akun admin; admin membuat dan mengelola akun teacher. Masing-masing mengaktifkan kata sandinya sendiri sebelum masuk ke ruang kerja sesuai peran. Pendaftaran member, penugasan/pengelolaan kelas, trial, dan pembayaran ada di issue lanjutan.
+Fondasi aplikasi OttoDot untuk issue [#23](https://github.com/master23rd/ottodot-ai/issues/23), [#24](https://github.com/master23rd/ottodot-ai/issues/24), [#25](https://github.com/master23rd/ottodot-ai/issues/25), dan [#26](https://github.com/master23rd/ottodot-ai/issues/26). Superadmin mengelola akun admin; admin membuat dan mengelola akun teacher serta staff. Masing-masing mengaktifkan kata sandinya sendiri sebelum masuk ke ruang kerja sesuai peran. Pendaftaran member, penugasan/pengelolaan kelas, trial, dan pembayaran ada di issue lanjutan.
 
 ## Prasyarat
 
@@ -32,10 +32,17 @@ Perubahan akun dan hasil pengiriman email tampil pada daftar aktivitas. Token ak
 3. Teacher membuka tautan dalam 48 jam, membuat kata sandi minimal 16 karakter, lalu masuk di `/login` dan diarahkan ke `/teacher`. Ruang kerja teacher masih kosong sampai fitur penugasan kelas tersedia.
 4. Admin dapat menonaktifkan teacher; sesi aktif dicabut. Akun yang pernah aktivasi dapat diaktifkan kembali tanpa membuat kata sandi baru. Perubahan dan hasil email dicatat pada aktivitas teacher.
 
+## Akun staff
+
+1. Masuk sebagai admin dan buka **Akun staff** dari `/admin`.
+2. Buat staff dengan nama dan email unik. Tautan aktivasi sekali pakai dikirim melalui SMTP; kegagalan dan masa berlaku tampil pada daftar. Gunakan **Kirim ulang email** bila perlu.
+3. Staff membuka tautan dalam 48 jam, membuat kata sandi minimal 16 karakter, lalu login di `/login` dan diarahkan ke `/staff`. Ruang kerja staff menunggu penugasan kelas pada tahap berikutnya.
+4. Admin dapat menonaktifkan akun dan mencabut sesi aktif, lalu mengaktifkan kembali akun yang telah menyelesaikan aktivasi. Perubahan dan hasil pengiriman email tampil dalam audit.
+
 Untuk build produksi, jalankan `npm run build` dan `npm start` dengan environment yang sama. Atur `BETTER_AUTH_URL` ke origin publik aplikasi. Jangan commit `.env`.
 
 ## Pemeriksaan
 
 `npm run typecheck` memeriksa TypeScript. `npm test` menjalankan pengujian seeder dan keputusan akses. Build dapat diperiksa dengan `npm run build` setelah Prisma Client dihasilkan.
 
-Route `/dashboard`, `/admin`, `/admins`, `/teachers`, dan `/teacher` memeriksa sesi Better Auth serta role terbaru dari database di server. Pengguna tanpa sesi dialihkan ke `/login`; role yang salah dialihkan ke `/unauthorized`. Signup publik dimatikan pada tahap fondasi ini.
+Route `/dashboard`, `/admin`, `/admins`, `/teachers`, `/teacher`, `/staff-accounts`, dan `/staff` memeriksa sesi Better Auth serta role terbaru dari database di server. Pengguna tanpa sesi dialihkan ke `/login`; role yang salah dialihkan ke `/unauthorized`. Signup publik dimatikan pada tahap fondasi ini.

@@ -6,7 +6,7 @@ import { Brand } from './Brand'
 export function OperatorActivationPage({
   role, contact, completeActivation,
 }: {
-  role: 'admin' | 'teacher'
+  role: 'admin' | 'teacher' | 'staff'
   contact: 'superadmin' | 'admin'
   completeActivation: (input: { token: string; password: string }) => Promise<{ ok: boolean; code?: string }>
 }) {

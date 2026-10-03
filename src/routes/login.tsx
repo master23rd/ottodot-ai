@@ -33,7 +33,7 @@ function Login() {
         setError('Akun tidak aktif atau belum memiliki akses.')
         return
       }
-      await navigate({ to: workspace.user.role === 'SUPERADMIN' ? '/dashboard' : workspace.user.role === 'TEACHER' ? '/teacher' : '/admin' })
+      await navigate({ to: workspace.user.role === 'SUPERADMIN' ? '/dashboard' : workspace.user.role === 'TEACHER' ? '/teacher' : workspace.user.role === 'STAFF' ? '/staff' : '/admin' })
     } catch {
       setError('Tidak dapat masuk sekarang. Coba lagi beberapa saat.')
     } finally {
@@ -66,7 +66,7 @@ function Login() {
               {error && <Alert color="red" role="alert">{error}</Alert>}
               <Button type="submit" fullWidth size="md" loading={pending}>Masuk ke ruang kerja</Button>
             </form>
-            <p className="auth-help">Akun baru untuk admin dan pengajar dibuat oleh pengelola OttoDot.</p>
+            <p className="auth-help">Akun baru untuk admin, teacher, dan staff dibuat oleh pengelola OttoDot.</p>
           </div>
           <p className="auth-footer">© {new Date().getFullYear()} OttoDot</p>
         </div>

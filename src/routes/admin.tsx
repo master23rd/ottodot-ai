@@ -40,6 +40,7 @@ function AdminDashboard() {
       <div className="sidebar-label">RUANG KERJA</div>
       <div className="nav-current">Ringkasan admin</div>
       <Link className="nav-link" to="/teachers">Akun teacher</Link>
+      <Link className="nav-link" to="/staff-accounts">Akun staff</Link>
       <div className="sidebar-spacer" />
       <div className="sidebar-user"><span className="avatar">{user.name.slice(0, 1).toUpperCase()}</span><span><strong>{user.name}</strong><small>Admin</small></span></div>
     </aside>

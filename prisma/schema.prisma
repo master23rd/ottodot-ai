@@ -22,6 +22,7 @@ model User {
   accounts      Account[]
   adminActivation AdminActivation?
   teacherActivation TeacherActivation?
+  staffActivation   StaffActivation?
 
   @@map("user")
 }
@@ -50,6 +51,19 @@ model TeacherActivation {
   createdAt           DateTime @default(now())
 
   @@map("teacher_activation")
+}
+
+model StaffActivation {
+  id                  String   @id
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash           String   @unique
+  expiresAt           DateTime
+  deliveryStatus      String   @default("PENDING")
+  deliveryAttemptedAt DateTime?
+  createdAt           DateTime @default(now())
+
+  @@map("staff_activation")
 }
 
 model AdminAudit {

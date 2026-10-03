@@ -14,5 +14,6 @@ describe('operator activation primitives', () => {
   it('routes admin and teacher links to different activation screens', () => {
     expect(operatorActivationUrl('admin', 'one', 'https://ottodot.example')).toBe('https://ottodot.example/activate#token=one')
     expect(operatorActivationUrl('teacher', 'two', 'https://ottodot.example')).toBe('https://ottodot.example/activate-teacher#token=two')
+    expect(operatorActivationUrl('staff', 'three', 'https://ottodot.example')).toBe('https://ottodot.example/activate-staff#token=three')
   })
 })

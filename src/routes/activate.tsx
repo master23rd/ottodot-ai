@@ -8,6 +8,7 @@ export const Route = createFileRoute('/activate')({ component: ActivateAdmin })
 
 function ActivateAdmin() {
   const [token, setToken] = useState('')
+  const [linkChecked, setLinkChecked] = useState(false)
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [pending, setPending] = useState(false)
@@ -15,9 +16,14 @@ function ActivateAdmin() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    const fragment = new URLSearchParams(window.location.hash.slice(1))
-    setToken(fragment.get('token') ?? '')
-    if (fragment.has('token')) window.history.replaceState(null, '', '/activate')
+    function readToken() {
+      const fragment = new URLSearchParams(window.location.hash.slice(1))
+      setToken(fragment.get('token') ?? '')
+      setLinkChecked(true)
+    }
+    readToken()
+    window.addEventListener('hashchange', readToken)
+    return () => window.removeEventListener('hashchange', readToken)
   }, [])
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -32,6 +38,7 @@ function ActivateAdmin() {
         return
       }
       setComplete(true)
+      window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search)
       setToken('')
       setPassword('')
       setConfirm('')
@@ -44,7 +51,7 @@ function ActivateAdmin() {
     <div className="auth-form-side"><div className="mobile-brand"><Brand /></div><div className="auth-form-inner">
       <p className="eyebrow">AKTIVASI ADMIN</p><h2>{complete ? 'Akun siap digunakan' : 'Buat kata sandi'}</h2>
       {complete ? <><p className="muted">Akun admin Anda sudah aktif. Masuk untuk membuka ruang kerja.</p><Link className="primary-link" to="/login">Masuk sekarang</Link></> : <><p className="muted">Gunakan minimal 16 karakter. Tautan ini berlaku sekali.</p>
-        {!token && <Alert color="orange" role="alert">Tautan aktivasi tidak ditemukan. Minta tautan baru kepada superadmin.</Alert>}
+        {linkChecked && !token && <Alert color="orange" role="alert">Tautan aktivasi tidak ditemukan. Minta tautan baru kepada superadmin.</Alert>}
         <form onSubmit={submit} className="login-form">
           <PasswordInput label="Kata sandi baru" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.currentTarget.value)} required minLength={16} maxLength={128} disabled={pending || !token} />
           <PasswordInput label="Ulangi kata sandi" autoComplete="new-password" value={confirm} onChange={(event) => setConfirm(event.currentTarget.value)} required minLength={16} disabled={pending || !token} />
